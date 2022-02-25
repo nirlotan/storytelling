@@ -85,7 +85,7 @@ if pwd == st.secrets["password"]:
 
                             
         base_chart.encode(y=alt.Y("shares"),tooltip="shares").properties(title="comments") | \
-                            base_chart.encode(y=alt.Y("interactions"),tooltip="views").properties(title="interactions")
+                            base_chart.encode(y=alt.Y("interactions"),tooltip="interactions").properties(title="interactions")
                             
 
     elif report == "Annual Summary":
