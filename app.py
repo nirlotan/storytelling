@@ -5,11 +5,25 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import altair as alt
 
+from google.oauth2 import service_account
+from gsheetsdb import connect
 
 
-@st.cache(allow_output_mutation=True)
-def load_data():
-    return pd.read_csv("storytelling_en.csv")
+# Create a connection object.
+credentials = service_account.Credentials.from_service_account_info(
+    st.secrets["gcp_service_account"],
+    scopes=[
+        "https://www.googleapis.com/auth/spreadsheets",
+    ],
+)
+conn = connect(credentials=credentials)
+
+# Perform SQL query on the Google Sheet.
+# Uses st.cache to only rerun when the query changes or after 10 min.
+@st.cache(allow_output_mutation=True, show_spinner=False, hash_funcs={pd.DataFrame: hash})
+def run_query(query):
+    rows = conn.execute(query, headers=1)
+    return rows
 
 def conv(x):
     try:
@@ -17,12 +31,14 @@ def conv(x):
     except:
         return 0
 
-def dt_convert( x ):
-    dt = datetime.strptime( x , "%b-%y")
-    #return f"{dt.year}.{dt.month}"
-    return str(dt)[0:7]
+def dt_convert( dt ):
+    return f"{dt.year}.{dt.month}"
 
-main_df = load_data()
+sheet_url = st.secrets["private_gsheets_url"]
+rows = run_query(f'SELECT * FROM "{sheet_url}"')
+main_df = pd.DataFrame(rows)
+
+# main_df = load_data()
 
 df = main_df.copy()
 df.views = df.views.apply(conv)
